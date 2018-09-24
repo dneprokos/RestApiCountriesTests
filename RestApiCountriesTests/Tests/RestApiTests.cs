@@ -1,12 +1,9 @@
 ﻿using Flurl;
 using Flurl.Http;
-using Newtonsoft.Json;
 using NUnit.Framework;
 using RestApiCountriesTests.Models;
 using RestApiCountriesTests.TestUtils;
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -75,38 +72,11 @@ namespace RestApiCountriesTests
             string url = TestSettings.BaseUrl.AppendPathSegment("name").AppendPathSegment(countryName);
 
             var response = await url.GetJsonAsync<List<CountryTestModel>>();
-            CountryTestModel ukraine = response.First();
+            CountryTestModel actualUkraine = response.First();
+            CountryTestModel expectedUkraine = TestHelpers.ConvertJsonToCountryTestModel("ExpectedResponseUkraine.json");
 
             //TODO: Investigate this method implementation
-            AssertObjectFieldPropertiesAreEqual(GetExpectedJsonResponseForUkraine(), ukraine);
-        }
-
-        private CountryTestModel GetExpectedJsonResponseForUkraine()
-        {
-            string filePath = TestSettings.RootProjectDirectory + "\\TestData\\ExpectedResponseUkraine.json";
-            CountryTestModel expectedCountry;
-
-            using (StreamReader r = new StreamReader(filePath))
-            {
-                string json = r.ReadToEnd();
-                expectedCountry = JsonConvert.DeserializeObject<CountryTestModel>(json);
-            }
-            return expectedCountry;
-        }
-
-        public static void AssertObjectFieldPropertiesAreEqual<T>(T expected, T actual)
-        {
-            var failures = new List<string>();
-            var properties = typeof(T).GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-            foreach (var property in properties)
-            {
-                var v1 = property.GetValue(expected);
-                var v2 = property.GetValue(actual);
-                if (v1 == null && v2 == null) continue;
-                if (!v1.Equals(v2)) failures.Add(string.Format("{0}: Expected:<{1}> Actual:<{2}>", property.Name, v1, v2));
-            }
-            if (failures.Any())
-                Assert.Fail("Following object properties are different. " + Environment.NewLine + string.Join(Environment.NewLine, failures));
-        }
+            AssertHelpers.AssertObjectFieldPropertiesAreEqual(expectedUkraine, actualUkraine);
+        }       
     }
 }
