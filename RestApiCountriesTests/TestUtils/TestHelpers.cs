@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Flurl;
+using Newtonsoft.Json;
 using RestApiCountriesTests.Models;
 using System.IO;
 
@@ -23,6 +24,11 @@ namespace RestApiCountriesTests.TestUtils
                 expectedCountry = JsonConvert.DeserializeObject<CountryTestModel>(json);
             }
             return expectedCountry;
+        }
+
+        public static string GetCountryByNameUrlBuilder(string countryName)
+        {
+            return TestSettings.BaseUrl.AppendPathSegment("name").AppendPathSegment(countryName);
         }
     }
 }

@@ -1,0 +1,11 @@
+﻿{
+    "currencies": [
+        {
+            "code": "UAH",
+            "name": "Ukrainian hryvnia",
+            "symbol": "₴"
+        }
+    ],
+    "name": "Ukraine",
+    "capital": "Kiev"
+}
