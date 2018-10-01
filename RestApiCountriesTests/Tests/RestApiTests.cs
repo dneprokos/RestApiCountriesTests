@@ -1,4 +1,5 @@
-﻿using Flurl;
+﻿using FluentAssertions;
+using Flurl;
 using Flurl.Http;
 using NUnit.Framework;
 using RestApiCountriesTests.Models;
@@ -7,18 +8,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace RestApiCountriesTests
+namespace RestApiCountriesTests   
 {
     [TestFixture]
     public class RestApiTests
     {
+        private string ukraineResponseJsonName = "ExpectedResponseUkraine.json";
+        private string ukraineResponseWithThreeFieldsOnlyJsonName = "ExpectedResponseUkraineWithThreeFieldsOnly.json";
+
         [Test]
         [Category("Smoke")]
         [Category("Regression")]
         [TestCase("Ukraine", "Ukrainian hryvnia")]
-        public async Task RequestCountryByName_CountryCurrencyIsEqualsToExpected(string countryName, string expectedCurrency)
+        public async Task  RequestCountryByName_CountryCurrencyIsEqualsToExpected(string countryName, string expectedCurrency)
         {
-            string url = TestSettings.BaseUrl.AppendPathSegment("name").AppendPathSegment(countryName);
+            string url = TestHelpers.GetCountryByNameUrlBuilder(countryName);
 
             var getResponseStatus = await url.AllowAnyHttpStatus().GetAsync();
             var response = await url.GetJsonAsync<List<CountryTestModel>>();
@@ -38,7 +42,7 @@ namespace RestApiCountriesTests
         [TestCase("Wakanda", 404)]
         public async Task RequestCountryByName_CountryNameDoesNotExists_Error404ShouldBEReturned(string countryName, int expectedError)
         {
-            var url = TestSettings.BaseUrl.AppendPathSegment("name").AppendPathSegment(countryName);
+            var url = TestHelpers.GetCountryByNameUrlBuilder(countryName);
             var getResponse = await url.AllowAnyHttpStatus().GetAsync();
 
             Assert.AreEqual(expectedError, (int)getResponse.StatusCode);
@@ -69,14 +73,28 @@ namespace RestApiCountriesTests
         [TestCase("Ukraine")]
         public async Task RequestCountryByName_AllReturnedPropertiesAreEqualsToExpected(string countryName)
         {
-            string url = TestSettings.BaseUrl.AppendPathSegment("name").AppendPathSegment(countryName);
+            string url = TestHelpers.GetCountryByNameUrlBuilder(countryName);
 
             var response = await url.GetJsonAsync<List<CountryTestModel>>();
             CountryTestModel actualUkraine = response.First();
-            CountryTestModel expectedUkraine = TestHelpers.ConvertJsonToCountryTestModel("ExpectedResponseUkraine.json");
+            CountryTestModel expectedUkraine = TestHelpers.ConvertJsonToCountryTestModel(ukraineResponseJsonName);
 
-            //TODO: Investigate this method implementation
-            AssertHelpers.AssertObjectFieldPropertiesAreEqual(expectedUkraine, actualUkraine);
+            actualUkraine.Should().BeEquivalentTo(expectedUkraine);
+        }
+
+        [Test]
+        [Category("Regression")]
+        [TestCase("Ukraine")]
+        public async Task RequestCountryByNameAndFilterByFields_OnlyFilteredFieldsShouldBeReturned(string countryName)
+        {
+            string url =
+                TestHelpers.GetCountryByNameUrlBuilder(countryName).SetQueryParam("fields", "name;capital;currencies");
+
+            var response = await url.GetJsonAsync<List<CountryTestModel>>();
+            CountryTestModel actualUkraine = response.First();
+            CountryTestModel expectedUkraine = TestHelpers.ConvertJsonToCountryTestModel(ukraineResponseWithThreeFieldsOnlyJsonName);
+
+            actualUkraine.Should().BeEquivalentTo(expectedUkraine);
         }       
     }
 }
