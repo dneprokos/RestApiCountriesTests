@@ -84,17 +84,36 @@ namespace RestApiCountriesTests
 
         [Test]
         [Category("Regression")]
-        [TestCase("Ukraine")]
-        public async Task RequestCountryByNameAndFilterByFields_OnlyFilteredFieldsShouldBeReturned(string countryName)
+        [TestCase("Ukraine", "fields", "name;capital;currencies")]
+        public async Task RequestCountryByNameAndFilterByFields_OnlyFilteredFieldsShouldBeReturned(string countryName, string queryName, string queryValues)
         {
             string url =
-                TestHelpers.GetCountryByNameUrlBuilder(countryName).SetQueryParam("fields", "name;capital;currencies");
+                TestHelpers.GetCountryByNameUrlBuilder(countryName).SetQueryParam(queryName, queryValues);
 
             var response = await url.GetJsonAsync<List<CountryTestModel>>();
             CountryTestModel actualUkraine = response.First();
             CountryTestModel expectedUkraine = TestHelpers.ConvertJsonToCountryTestModel(ukraineResponseWithThreeFieldsOnlyJsonName);
 
             actualUkraine.Should().BeEquivalentTo(expectedUkraine);
-        }       
+        }
+
+        [Test]
+        [Category("Regression")]
+        [TestCase("alpha", "codes", @"ua;gb;us")]
+        public async Task RequestCountriesByListOfCodes_RequestedCountriesListShouldBeReturned(string end, string queryName, string queryValues)
+        {
+            //Arrange
+            string url = TestSettings.BaseUrl.AppendPathSegment(end).SetQueryParam(queryName, queryValues);
+
+            //Act
+            var response = await url.GetJsonAsync<List<CountryTestModel>>();
+            List<string> countryNames = response.Select(c => c.name).ToList();
+
+
+            //Assert
+            Assert.AreEqual(3, countryNames.Count);
+            List<string> expectedCountryNames = new List<string> {"Ukraine", "United Kingdom of Great Britain and Northern Ireland", "United States of America" };
+            countryNames.Should().BeEquivalentTo(expectedCountryNames);
+        }
     }
 }
